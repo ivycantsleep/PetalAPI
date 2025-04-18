@@ -723,7 +723,7 @@ OSNotifyCreateThermalZoneExit:
 
 NTSTATUS
 EXPORT
-OSNotifyDeviceCheck(
+OSNotifyDeviceCheck_SP1(
     IN  PNSOBJ  AcpiObject
     )
 /*++
@@ -827,6 +827,91 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
+
+
+#ifdef _X86_
+// SP3
+__declspec(naked) NTSTATUS
+EXPORT
+OSNotifyDeviceCheck(
+    IN  PNSOBJ  AcpiObject
+    )
+{
+__asm {
+                mov     edi, edi
+                push    ebp
+                mov     ebp, esp
+                push    [ebp+8]
+                call    ACPIDockIsDockDevice
+                test    al, al
+                jz      short loc_1C94F
+                pop     ebp
+                jmp     OSNotifyDeviceEject
+
+loc_1C94F: 
+                push    ebx
+                push    esi
+                mov     esi, offset AcpiDeviceTreeLock
+                mov     ecx, esi
+                call    dword ptr [KfAcquireSpinLock]
+                mov     ecx, [ebp+8]
+                mov     bl, al
+                xor     edx, edx
+
+loc_1C965:
+                mov     eax, [ecx+30h]
+                cmp     eax, edx
+                mov     ecx, [ecx+8]
+                jz      short loc_1C97E
+                cmp     dword ptr [eax+8], '_SGP'
+                jz      short loc_1C97A
+                xor     eax, eax
+
+loc_1C97A:
+                cmp     eax, edx
+                jnz     short loc_1C986
+
+loc_1C97E:
+                cmp     ecx, edx
+                jnz     short loc_1C965
+                cmp     eax, edx
+                jz      short loc_1C9B0
+
+loc_1C986:
+                mov     ecx, [eax+13Ch]
+                jmp     short loc_1C99D
+
+loc_1C98E:
+                mov     eax, [ecx]
+                and     eax, 8
+                or      eax, edx
+                jz      short loc_1C9A3
+                mov     ecx, [ecx+13Ch]
+
+loc_1C99D:
+                cmp     ecx, edx
+                jnz     short loc_1C98E
+                jmp     short loc_1C9B0
+
+loc_1C9A3:
+                push    edx
+                push    dword ptr [ecx+138h]
+                call    dword ptr [IoInvalidateDeviceRelations]
+
+loc_1C9B0:
+                mov     ecx, esi
+                mov     dl, bl
+                call    dword ptr [KfReleaseSpinLock]
+                pop     esi
+                xor     eax, eax
+                pop     ebx
+                pop     ebp
+                ret
+}
+}
+// SP3
+#endif
+
 
 NTSTATUS
 EXPORT

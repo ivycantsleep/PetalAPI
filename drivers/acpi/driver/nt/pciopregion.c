@@ -1119,7 +1119,10 @@ GetPciAddressWorker(
 
         pciConfig = (PPCI_COMMON_CONFIG)buffer;
 
-        if (pciConfig->HeaderType != PCI_BRIDGE_TYPE) {
+        // SP3
+        if ((PCI_CONFIGURATION_TYPE(pciConfig) != PCI_BRIDGE_TYPE) &&
+            (PCI_CONFIGURATION_TYPE(pciConfig) != PCI_CARDBUS_BRIDGE_TYPE)) {
+        // SP3
 
             //
             // Make a guess that the bus number was 0.
@@ -1388,7 +1391,8 @@ Notes:
 
     if (state->Hid) {
 
-        if (strstr(state->Hid, PCI_PNP_ID)) {
+        if (strstr(state->Hid, PCI_PNP_ID)  ||
+            strstr(state->Hid, PCIE_PNP_ID)) {
             //
             // Was PCI.
             //
@@ -1432,7 +1436,8 @@ Notes:
 
     if (state->Cid) {
 
-        if (strstr(state->Cid, PCI_PNP_ID)) {
+        if (strstr(state->Cid, PCI_PNP_ID)  ||
+            strstr(state->Cid, PCIE_PNP_ID)) {
             //
             // Was PCI.
             //
@@ -1669,7 +1674,8 @@ IsPciBusAsyncWorker(
 
     if (state->Hid) {
 
-        if (strstr(state->Hid, PCI_PNP_ID)) {
+        if (strstr(state->Hid, PCI_PNP_ID)  ||
+            strstr(state->Hid, PCIE_PNP_ID)) {
             //
             // Was PCI.
             //
@@ -1711,7 +1717,8 @@ IsPciBusAsyncWorker(
 
     if (state->Cid) {
 
-        if (strstr(state->Cid, PCI_PNP_ID)) {
+        if (strstr(state->Cid, PCI_PNP_ID)  ||
+            strstr(state->Cid, PCIE_PNP_ID)) {
             //
             // Was PCI.
             //

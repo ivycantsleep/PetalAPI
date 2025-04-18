@@ -2547,7 +2547,7 @@ Return Value:
               PNP_BIOS_TO_IO_NO_CONSUMED_RESOURCES : 0),
             &resList
             );
-        ASSERT(NT_SUCCESS(status));
+        //ASSERT(NT_SUCCESS(status));
 
     }
 

@@ -1327,6 +1327,17 @@ NTSTATUS LOCAL ValidateArgTypes(POBJDATA pArgs, PSZ pszExpectedTypes)
                 }
                 break;
 
+            case ARGOBJ_STRBUFDATA:
+                 if ((pArgs[i].dwDataType != OBJTYPE_STRDATA) &&
+                     (pArgs[i].dwDataType != OBJTYPE_BUFFDATA))
+                {
+                    rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
+                                     ("ValidateArgTypes: expected Arg%d to be type str/buff (Type=%s)",
+                                      i,
+                                      GetObjectTypeName(pArgs[i].dwDataType)));
+                }
+                break;
+
             default:
                 rc = AMLI_LOGERR(AMLIERR_ASSERT_FAILED,
                                  ("ValidateArgTypes: internal error (invalid type - %c)",

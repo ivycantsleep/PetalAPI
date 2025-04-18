@@ -4712,7 +4712,7 @@ Return Value:
 } // ACPIDevicePowerProcessPhase2SystemSubPhase3
 
 NTSTATUS
-ACPIDevicePowerProcessPhase3(
+ACPIDevicePowerProcessPhase3_SP1(
     VOID
     )
 /*++
@@ -5058,6 +5058,215 @@ Return Value:
     return (returnPending ? STATUS_PENDING : STATUS_SUCCESS);
 
 } // ACPIPowerProcessPhase3
+
+
+#ifdef _X86_
+// SP3
+__declspec(naked) NTSTATUS
+ACPIDevicePowerProcessPhase3(
+    VOID
+    )
+{
+    __asm {
+                mov     edi, edi
+                push    ebp
+                mov     ebp, esp
+                sub     esp, 18h
+                push    ebx
+                push    esi
+                mov     ebx, offset AcpiPowerLock
+                push    edi
+                mov     ecx, ebx
+                mov     byte ptr [ebp-1], 0
+                call    dword ptr [KefAcquireSpinLockAtDpcLevel]
+                mov     esi, dword ptr [AcpiPowerNodeList+0] ;Flink
+                mov     eax, offset AcpiPowerNodeList
+                cmp     esi, eax
+                jz      loc_1535A
+                jmp     short loc_15250
+loc_1524D:
+                mov     esi, [ebp-0Ch]
+loc_15250:
+                mov     eax, [esi]
+                mov     [ebp-0Ch], eax
+                mov     eax, [esi+8]
+                and     eax, 2
+                xor     ecx, ecx
+                or      eax, ecx
+                jz      loc_1534C
+                push    3
+                push    4
+                lea     ecx, [esi+28h]
+                pop     edx
+                call    dword ptr [InterlockedCompareExchange]
+                cmp     eax, 3
+                jnz     loc_1534C
+                and     dword ptr [ebp-8], 0
+                lea     eax, [esi+20h]
+                mov     edi, [eax]
+                jmp     short loc_152C6
+loc_15287:
+                lea     eax, [edi-18h]
+                mov     edi, [edi]
+                mov     [ebp-14h], eax
+                mov     eax, [eax+14h]
+                push    0
+                lea     ecx, [eax+0F0h]
+                xor     edx, edx
+                mov     [ebp-10h], eax
+                call    dword ptr [InterlockedCompareExchange]
+                mov     ecx, [ebp-10h]
+                mov     edx, [ecx+0ECh]
+                mov     ecx, [ebp-14h]
+                cmp     edx, [ecx+0Ch]
+                jz      short loc_152C0
+                test    eax, eax
+                jz      short loc_152C3
+                cmp     byte ptr [ecx+10h], 0
+                jz      short loc_152C3
+
+loc_152C0:
+                inc     dword ptr [ebp-8]
+
+loc_152C3:
+                lea     eax, [esi+20h]
+
+loc_152C6:
+                cmp     edi, eax
+                jnz     short loc_15287
+                mov     edx, [ebp-8]
+                lea     ecx, [esi+10h]
+                call    dword ptr [InterlockedExchange]
+                mov     eax, [esi+0Ch]
+                mov     ecx, [esi+8]
+                mov     [ebp-14h], eax
+                mov     eax, ecx
+                and     eax, 440h
+                xor     edx, edx
+                or      eax, edx
+                jnz     short loc_1534C
+                and     ecx, 220h
+                xor     eax, eax
+                xor     edi, edi
+                or      ecx, eax
+                jnz     short loc_152FF
+                cmp     [ebp-8], edi
+                jz      short loc_1534C
+
+loc_152FF:
+                xor     edx, edx
+                push    4
+                inc     edx
+                lea     ecx, [esi+28h]
+                call    dword ptr [InterlockedCompareExchange]
+                mov     ecx, ebx
+                call    dword ptr [KefReleaseSpinLockFromDpcLevel]
+                push    esi
+                push    offset ACPIDeviceCompletePhase3On
+                push    edi
+                push    edi
+                push    edi
+                push    dword ptr [esi+2Ch]
+                call    AMLIAsyncEvalObject
+                add     esp, 18h
+                cmp     eax, 103h
+                jz      short loc_15340
+                push    esi
+                push    edi
+                push    eax
+                push    dword ptr [esi+2Ch]
+                call    ACPIDeviceCompletePhase3On
+                add     esp, 10h
+                jmp     short loc_15344
+
+
+loc_15340:
+                mov     byte ptr [ebp-1], 1
+
+loc_15344:
+                mov     ecx, ebx
+                call    dword ptr [KefAcquireSpinLockAtDpcLevel]
+
+loc_1534C:
+                mov     eax, offset AcpiPowerNodeList
+                cmp     [ebp-0Ch], eax
+                jnz     loc_1524D
+
+loc_1535A:
+                mov     edi, dword ptr [AcpiPowerNodeList+4] ; Blink
+                cmp     edi, eax
+                jz      short loc_153DC
+
+loc_15364:
+                mov     esi, edi
+                mov     eax, [esi+8]
+                mov     edi, [edi+4]
+                and     eax, 2
+                xor     ecx, ecx
+                or      eax, ecx
+                jz      short loc_153D4
+                xor     edx, edx
+                push    4
+                lea     ecx, [esi+28h]
+                inc     edx
+                call    dword ptr [InterlockedCompareExchange]
+                cmp     eax, 4
+                jz      short loc_15392
+                test    eax, eax
+                jz      short loc_153D4
+                mov     byte ptr [ebp-1], 1
+                jmp     short loc_153D4
+
+loc_15392:
+                mov     ecx, ebx
+                call    dword ptr [KefReleaseSpinLockFromDpcLevel]
+                push    esi
+                push    offset ACPIDeviceCompletePhase3Off
+                xor     eax, eax
+                push    eax
+                push    eax
+                push    eax
+                push    dword ptr [esi+30h]
+                call    AMLIAsyncEvalObject
+                add     esp, 18h
+                cmp     eax, 103h
+                jz      short loc_153C8
+                push    esi
+                push    0
+                push    eax
+                push    dword ptr [esi+30h]
+                call    ACPIDeviceCompletePhase3Off
+                add     esp, 10h
+                jmp     short loc_153CC
+
+loc_153C8:
+                mov     byte ptr [ebp-1], 1
+
+loc_153CC:
+                mov     ecx, ebx
+                call    dword ptr [KefAcquireSpinLockAtDpcLevel]
+
+loc_153D4:
+                cmp     edi, offset AcpiPowerNodeList
+                jnz     short loc_15364
+
+loc_153DC:
+                mov     ecx, ebx
+                call    dword ptr [KefReleaseSpinLockFromDpcLevel]
+                mov     al, [ebp-1]
+                neg     al
+                pop     edi
+                pop     esi
+                pop     ebx
+                sbb     eax, eax
+                and     eax, 103h
+                _emit   0xc9        ; "leave" opcode
+                ret
+    }
+}
+// SP3
+#endif
+
 
 NTSTATUS
 ACPIDevicePowerProcessPhase4(

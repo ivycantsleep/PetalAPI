@@ -300,7 +300,7 @@ NTSTATUS LOCAL ReadField(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
     ENTER(3, ("ReadField(pctxt=%x,pdataObj=%x,FieldDesc=%x,pdataResult=%x)\n",
               pctxt, pdataObj, pfd, pdataResult));
 
-    if ((pfd->dwFieldFlags & ACCTYPE_MASK) <= ACCTYPE_DWORD)
+    if ((pfd->dwFieldFlags & ACCTYPE_MASK) <= ACCTYPE_QWORD)
     {
         PUCHAR pb;
         ULONG dwcb;
@@ -309,11 +309,11 @@ NTSTATUS LOCAL ReadField(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
         {
             case OBJTYPE_UNKNOWN:
                 if (!(pfd->dwFieldFlags & FDF_BUFFER_TYPE) &&
-                    (pfd->dwNumBits <= sizeof(ULONG)*8))
+                     (pfd->dwNumBits <= sizeof(ULONG64)*8))      // dwNumBits = 64 for QWORD field
                 {
                     pdataResult->dwDataType = OBJTYPE_INTDATA;
                     pb = (PUCHAR)&pdataResult->uipDataValue;
-                    dwcb = sizeof(ULONG);
+                    dwcb = sizeof(ULONG);                       // ULONG64 ACPI 2.0
                 }
                 else
                 {
@@ -341,7 +341,7 @@ NTSTATUS LOCAL ReadField(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
 
             case OBJTYPE_INTDATA:
                 pb = (PUCHAR)&pdataResult->uipDataValue;
-                dwcb = sizeof(ULONG);
+                dwcb = sizeof(ULONG);   // acpi 2.0: sizeof(ULONG64)
                 break;
 
             case OBJTYPE_STRDATA:
@@ -410,14 +410,14 @@ NTSTATUS LOCAL WriteField(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
     ENTER(3, ("WriteField(pctxt=%x,pdataObj=%x,FieldDesc=%x,pdataSrc=%x)\n",
               pctxt, pdataObj, pfd, pdataSrc));
 
-    if ((pfd->dwFieldFlags & ACCTYPE_MASK) <= ACCTYPE_DWORD)
+    if ((pfd->dwFieldFlags & ACCTYPE_MASK) <= ACCTYPE_QWORD)
     {
         PWRFIELDLOOP pwfl;
 
         switch (pdataSrc->dwDataType)
         {
             case OBJTYPE_INTDATA:
-                dwBuffSize = MIN(sizeof(ULONG), dwDataInc);
+                dwBuffSize = MIN(sizeof(ULONG), dwDataInc); // ULONG64 for Integer64
                 pbBuff = (PUCHAR)&pdataSrc->uipDataValue;
                 break;
 

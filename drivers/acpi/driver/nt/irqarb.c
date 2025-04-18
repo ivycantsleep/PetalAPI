@@ -39,7 +39,8 @@ Revision History:
 extern LONG ArbDebugLevel;
 
 #define DEBUG_PRINT(Level, Message) \
-    if (ArbDebugLevel >= Level) DbgPrint Message
+    DbgPrint Message
+
 #else
 #define DEBUG_PRINT(Level, Message)
 #endif
@@ -3509,6 +3510,22 @@ Return Value:
         }
     }
 
+    // BSOD 0x7E(c0000005, ...) AcpiArbCrackPRT() two workarounds:
+    // 1) pci.sys presence check
+    // 2) not PCI device type check
+    if (0) {
+        if (!PciInterfacesInstantiated) {
+             return STATUS_NOT_FOUND;
+        }
+    } else {
+        if (Pdo->DriverObject == AcpiDriverObject) {
+            status = ACPIInternalIsPci(Pdo);
+            if (NT_SUCCESS(status))
+                if ( (((PDEVICE_EXTENSION)Pdo->DeviceExtension)->Flags & DEV_CAP_PCI_DEVICE) == 0 )
+                        return STATUS_NOT_FOUND;
+        }
+    }
+
     ASSERT(PciInterfacesInstantiated);
 
     *LinkNode = NULL;
@@ -4970,16 +4987,18 @@ DisableLinkNodeStartState:
                     }
 
                 } else {
+                    if (0) { // BSOD 0xA5 (0x10006, ...) workaround, missing _DIS method for "PNP0C0F" (PCI Interrupt Link Devices)
 
-                    //
-                    // Link nodes must be disablable.
-                    //
+                        //
+                        // Link nodes must be disablable.
+                        //
 
-                    KeBugCheckEx(ACPI_BIOS_ERROR,
-                                 ACPI_LINK_NODE_CANNOT_BE_DISABLED,
-                                 (ULONG_PTR)context->RootDevice,
-                                 0,
-                                 0);
+                        KeBugCheckEx(ACPI_BIOS_ERROR,
+                                     ACPI_LINK_NODE_CANNOT_BE_DISABLED,
+                                     (ULONG_PTR)context->RootDevice,
+                                     0,
+                                     0);
+                }
                 }
             }
         }

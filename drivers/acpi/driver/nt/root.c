@@ -142,8 +142,10 @@ Return Value:
 --*/
 {
     PKEVENT             event           = (PKEVENT) Context;
-#if DBG
+    // SP3
     PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    // SP3
+#if DBG
     PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
 
     if (deviceExtension != NULL) {

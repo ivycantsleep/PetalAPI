@@ -711,11 +711,14 @@ Return Value:
     // behind our back. The way that we can correct this problem is by
     // forcing a check of the GPEs...
     //
-    if (!IntStatus) {
+
+    // SP3
+    if ( !(AcpiOverrideAttributes & 0x0100) && !IntStatus ) {   // test    byte ptr _AcpiOverrideAttributes+1, 1
 
         IntStatus |= PM1_GPE_PENDING;
 
     }
+    // SP3
 
     //
     // Are any status bits set for events which are handled at ISR time?

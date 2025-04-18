@@ -304,6 +304,15 @@ Return Value:
     //
     deviceExtension = DeviceObject->DeviceExtension;
 
+    // SP3
+    if ( deviceExtension &&
+         deviceExtension->Signature != '_SGP' ) {
+            _ACPIInternalErrorEx(0x00090147,
+                    (ULONG_PTR)DeviceObject,
+                    (ULONG_PTR)deviceExtension);
+     }
+    // SP3
+
 #if 0
     //
     // Is this a surprise removed device extension?

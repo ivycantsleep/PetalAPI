@@ -52,22 +52,24 @@ AmliTestDebugPrintFunc(
     PCCHAR DebugMessage,
     ...)
    {
+   int     index;
    va_list ap;
    va_start(ap, DebugMessage);
 
-
    if(DebugPrintLevel & AmliTestDebugFlags)
-      {
-
-       
-       
-      if(_vsnprintf(AmliTestDebugBuffer,
+   {
+      index = _vsnprintf(AmliTestDebugBuffer,
          200,
          DebugMessage, 
-         ap) == -1)
+         ap);
+     // SP3
+     if(index == -1) 
       {
-         AmliTestDebugBuffer[199] = '\0';
+         AmliTestDebugBuffer[0] = '\0';
+      } else {
+         AmliTestDebugBuffer[index] = '\0';
       }
+      // SP3
 
       DbgPrint(AmliTestDebugBuffer);
       }

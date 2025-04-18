@@ -475,11 +475,6 @@ Return Value:
     PNSOBJ                  pswObject   = NULL;
 
     //
-    // Acquire the Spinlock
-    //
-    KeAcquireSpinLock( &AcpiPowerLock, &oldIrql );
-
-    //
     // Update the number of references on the device
     //
     if (Enable) {
@@ -595,6 +590,13 @@ Return Value:
     pswContext->DeviceExtension = DeviceExtension;
     pswContext->Count = 1;
 
+    // SP3
+    //
+    // Acquire the Spinlock
+    //
+    KeAcquireSpinLock( &AcpiPowerLock, &oldIrql );
+    // SP3
+
     //
     // Check to see if we are simply going to queue the context up, or
     // call the interpreter
@@ -697,11 +699,6 @@ Return Value:
     }
 
 ACPIWakeEnableDisableAsyncExit:
-
-    //
-    // Release the lock
-    //
-    KeReleaseSpinLock( &AcpiPowerLock, oldIrql );
 
     //
     // What happened

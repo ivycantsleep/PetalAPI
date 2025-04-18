@@ -150,6 +150,20 @@ NTSTATUS LOCAL StoreRef(PCTXT pctxt, PTERM pterm);
 BOOLEAN LOCAL MatchData(ULONG dwPkgData, ULONG dwOp, ULONG dwData);
 NTSTATUS LOCAL OSInterface(PCTXT pctxt, PTERM pterm);
 
+// ACPI 2.0
+NTSTATUS LOCAL ToInteger(PCTXT pctxt, PTERM pterm);
+NTSTATUS LOCAL ToHexString(PCTXT pctxt, PTERM pterm);
+NTSTATUS LOCAL ToDecimalString(PCTXT pctxt, PTERM pterm);
+NTSTATUS LOCAL ToBuffer(PCTXT pctxt, PTERM pterm);
+NTSTATUS LOCAL CreateQWordField(PCTXT pctxt, PTERM pterm);
+NTSTATUS LOCAL ConcatenateResTemplate(PCTXT pctxt, PTERM pterm);
+NTSTATUS LOCAL Mod(PCTXT pctxt, PTERM pterm);
+NTSTATUS LOCAL ToString(PCTXT pctxt, PTERM pterm);
+NTSTATUS LOCAL CopyObject(PCTXT pctxt, PTERM pterm);
+NTSTATUS LOCAL MidString(PCTXT pctxt, PTERM pterm);
+NTSTATUS LOCAL Continue(PCTXT pctxt, PTERM pterm);
+NTSTATUS LOCAL Timer(PCTXT pctxt, PTERM pterm);
+
 //object.c
 NTSTATUS LOCAL ReadObject(PCTXT pctxt, POBJDATA pdataObj, POBJDATA pdataResult);
 NTSTATUS LOCAL WriteObject(PCTXT pctxt, POBJDATA pdataObj, POBJDATA pdataSrc);

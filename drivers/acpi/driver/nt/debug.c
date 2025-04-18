@@ -80,6 +80,18 @@ _ACPIInternalError(
 {
     KeBugCheckEx (ACPI_DRIVER_INTERNAL, 0x1, Bugcode, 0, 0);
 }
+
+// SP3
+VOID
+_ACPIInternalErrorEx(
+    IN  ULONG       Bugcode0,
+    IN  ULONG_PTR   Bugcode1,
+    IN  ULONG_PTR   Bugcode2
+    )
+{
+    KeBugCheckEx (ACPI_DRIVER_INTERNAL, 0x2, Bugcode0, Bugcode1, Bugcode2);
+}
+// SP3
 
 #if DBG
 VOID

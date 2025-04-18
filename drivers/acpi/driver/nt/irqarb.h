@@ -99,7 +99,8 @@ IrqArbRestoreIrqRouting(
 extern ACPI_ARBITER    AcpiArbiter;
 extern BOOLEAN PciInterfacesInstantiated;
 
-#define PCI_PNP_ID "PNP0A03"
+#define PCI_PNP_ID  "PNP0A03"
+#define PCIE_PNP_ID "PNP0A08"
 #define LINK_NODE_PNP_ID "PNP0C0F"
 
 // Prototypes for stuff used by msi.c

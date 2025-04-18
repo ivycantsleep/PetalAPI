@@ -399,7 +399,7 @@ Return Value:
 {
     PACPI_BUILD_REQUEST buildRequest    = (PACPI_BUILD_REQUEST) Context;
     ULONG               nextWorkDone    = buildRequest->NextWorkDone;
-
+    ULONG               ParentName;
     //
     // Device what state we should transition to next
     //
@@ -413,10 +413,12 @@ Return Value:
         //
         // Death
         //
+
+        ParentName = AcpiObject ? (AcpiObject->pnsParent ? AcpiObject->pnsParent->dwNameSeg : 0) : 0 ;
         KeBugCheckEx(
             ACPI_BIOS_ERROR,
             ACPI_FAILED_MUST_SUCCEED_METHOD,
-            (ULONG_PTR) AcpiObject,
+            (ULONG_PTR) ParentName,
             Status,
             (AcpiObject ? AcpiObject->dwNameSeg : 0)
             );

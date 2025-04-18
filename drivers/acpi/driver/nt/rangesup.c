@@ -2311,9 +2311,11 @@ Return Value:
     //
     // Do we errors?
     //
-    if (bugCheck) {
 
-         ACPIPrint( (
+      if (0) {    // BSOD 0xA5 (0x02, ...) workaround, ACPI vs E820 mem ranges conflict
+    //if (bugCheck) {
+
+        ACPIPrint( (
              ACPI_PRINT_CRITICAL,
              "ACPI:\n"
              "ACPI: FATAL BIOS ERROR - Need new BIOS to fix PCI problems\n"

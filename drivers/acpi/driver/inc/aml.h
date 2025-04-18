@@ -90,6 +90,23 @@
 #define OP_LEQ                  0x93
 #define OP_LG                   0x94
 #define OP_LL                   0x95
+
+// Win7 ACPI 2.0
+#define OP_QWORD                0x0e
+#define OP_CONCATRESTMPL        0x84
+#define OP_MOD                  0x85
+#define OP_QWORDFIELD           0x8f
+#define OP_TOBUFFER             0x96
+#define OP_TODECSTRING          0x97
+#define OP_TOHEXSTRING          0x98
+#define OP_TOINTEGER            0x99
+#define OP_TOSTRING             0x9c
+#define OP_COPYOBJECT           0x9d
+#define OP_MID                  0x9e
+#define OP_CONTINUE             0x9f
+#define EXOP_TIMER              0x33
+#define OP_TIMER                EXOP(EXOP_TIMER)    // 5B33
+
 #define OP_IF                   0xa0
 #define OP_ELSE                 0xa1
 #define OP_WHILE                0xa2
@@ -173,12 +190,12 @@
 #define UPDATERULE_WRITEASZEROS 0x40    //WriteAsZeros
 #define ACCATTRIB_MASK          0xff00
 
+
 //
-// Returns 1, 2 or 4 for BYTE, WORD or DWORD respectively and returns 1 for
-// any other sizes.
-//
+// Returns 1, 2 or 4 for BYTE, WORD or DWORD respectively and returns 1 for any other sizes.
+// ACPI 2.0: return 8 for QWORD
 #define ACCSIZE(f)  (((((f) & ACCTYPE_MASK) >= ACCTYPE_BYTE) &&   \
-                    (((f) & ACCTYPE_MASK) <= ACCTYPE_DWORD))?   \
+                    (((f) & ACCTYPE_MASK) <= ACCTYPE_QWORD))?   \
                     (1 << (((f) & ACCTYPE_MASK) - 1)): 1)
 
 /*** Operation region space

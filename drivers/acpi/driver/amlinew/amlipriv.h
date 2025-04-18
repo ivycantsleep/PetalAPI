@@ -285,6 +285,7 @@
 #define AMLISTA_CONTINUE        0x00008003
 #define AMLISTA_PENDING         0x00008004
 #define AMLISTA_TIMEOUT         0x00008005
+#define AMLISTA_CONTINUEOP      0x00008006
 
 // Global AMLI flags
 #define AMLIF_LOCKED            0x00000001
@@ -331,6 +332,7 @@
 #define ARGOBJ_BASICDATA        'D'             //INTDATA,STRDATA,BUFFDATA
 #define ARGOBJ_COMPLEXDATA      'C'             //BUFFDATA,PKGDATA
 #define ARGOBJ_REFERENCE        'R'             //OBJALIAS,DATAALIAS,BUFFFIELD
+#define ARGOBJ_STRBUFDATA       'T'             //OBJTYPE_STRDATA/OBJTYPE_BUFFDATA
 
 #define MAX_BYTE                0xff
 #define MAX_WORD                0xffff
@@ -368,7 +370,8 @@
 /*** Type and Structure definitions
  */
 
-typedef NTSTATUS (LOCAL *PFNOP)(PFRAME, PPNSOBJ);
+//typedef NTSTATUS (LOCAL *PFNOP)(PFRAME, PPNSOBJ);
+typedef NTSTATUS (LOCAL *PFNOP)(PCTXT, PTERM);
 
 typedef struct _amlterm
 {

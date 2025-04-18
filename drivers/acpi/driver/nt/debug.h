@@ -53,6 +53,15 @@ Environment:
         IN  ULONG   Bugcode
         );
 
+    // SP3
+    VOID
+    _ACPIInternalErrorEx(
+        IN  ULONG       Bugcode0,
+        IN  ULONG_PTR   Bugcode1,
+        IN  ULONG_PTR   Bugcode2
+        );
+    // SP3
+
     #if DBG
         VOID
         ACPIDebugResourceDescriptor(

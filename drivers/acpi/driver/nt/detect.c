@@ -955,13 +955,14 @@ Return Value:
             "ACPIDetectDuplicateHID - matches with %08lx\n",
             childExtension
             ) );
-        KeBugCheckEx(
-            ACPI_BIOS_ERROR,
-            ACPI_REQUIRED_METHOD_NOT_PRESENT,
-            (ULONG_PTR) DeviceExtension,
-            PACKED_UID,
-            0
-            );
+
+        //KeBugCheckEx(
+        //    ACPI_BIOS_ERROR,
+        //    ACPI_REQUIRED_METHOD_NOT_PRESENT,
+        //    (ULONG_PTR) DeviceExtension,
+        //    PACKED_UID,
+        //    0
+        //    );
 
         //
         // Make sure to only muck with the DeviceExtension UID if it doesn't
@@ -974,7 +975,7 @@ Return Value:
             //
             DeviceExtension->InstanceID = ExAllocatePoolWithTag(
                 NonPagedPool,
-                9 * sizeof(UCHAR),
+                5 * sizeof(UCHAR),
                 ACPI_STRING_POOLTAG
                 );
             if (DeviceExtension->InstanceID == NULL) {
@@ -987,8 +988,8 @@ Return Value:
                 ACPIInternalError( ACPI_DETECT );
 
             }
-            RtlZeroMemory( DeviceExtension->InstanceID, 9 * sizeof(UCHAR) );
-            sprintf( DeviceExtension->InstanceID, "%lx", DeviceExtension->AcpiObject->dwNameSeg );
+            RtlZeroMemory( DeviceExtension->InstanceID, 5 * sizeof(UCHAR) );
+            sprintf( DeviceExtension->InstanceID, "%.4s", & DeviceExtension->AcpiObject->dwNameSeg );
 
             //
             // Remember that we have a fixed uid
@@ -1012,7 +1013,7 @@ Return Value:
             //
             childExtension->InstanceID = ExAllocatePoolWithTag(
                 NonPagedPool,
-                9 * sizeof(UCHAR),
+                5 * sizeof(UCHAR),
                 ACPI_STRING_POOLTAG
                 );
             if (childExtension->InstanceID == NULL) {
@@ -1025,8 +1026,8 @@ Return Value:
                 ACPIInternalError( ACPI_DETECT );
 
             }
-            RtlZeroMemory( childExtension->InstanceID, 9 * sizeof(UCHAR) );
-            sprintf( childExtension->InstanceID, "%lx", childExtension->AcpiObject->dwNameSeg );
+            RtlZeroMemory( childExtension->InstanceID, 5 * sizeof(UCHAR) );
+            sprintf( childExtension->InstanceID, "%.4s", & childExtension->AcpiObject->dwNameSeg );
 
             //
             // Update the flags for both devices to indicate the fixed UID

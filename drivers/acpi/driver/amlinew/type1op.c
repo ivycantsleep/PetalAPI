@@ -581,6 +581,11 @@ NTSTATUS LOCAL While(PCTXT pctxt, PTERM pterm)
             rc = PushScope(pctxt, pctxt->pbOp, pterm->pbOpEnd, pterm->pbOpTerm,
                            pctxt->pnsScope, pctxt->powner, pctxt->pheapCurrent,
                            pterm->pdataResult);
+            // SP3
+            if (!rc) {
+              ((PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd)->dwfFrame |= CALLF_ACQ_MUTEX;
+            }
+            // SP3
         }
     }
 

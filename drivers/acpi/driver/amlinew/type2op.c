@@ -9,6 +9,11 @@
 
 #include "pch.h"
 
+_CRTIMP unsigned __int64 __cdecl _strtoui64(
+    const char * _String,
+    char ** _EndPtr,
+    int _Radix);
+
 #ifdef	LOCKABLE_PRAGMA
 #pragma	ACPI_LOCKABLE_DATA
 #pragma	ACPI_LOCKABLE_CODE
@@ -28,6 +33,7 @@
 
 NTSTATUS LOCAL Buffer(PCTXT pctxt, PTERM pterm)
 {
+    USHORT* wIOBuf;
     TRACENAME("BUFFER")
     NTSTATUS rc = STATUS_SUCCESS;
     ULONG dwInitSize = (ULONG)(pterm->pbOpEnd - pctxt->pbOp);
@@ -55,6 +61,15 @@ NTSTATUS LOCAL Buffer(PCTXT pctxt, PTERM pterm)
             rc = AMLI_LOGERR(AMLIERR_INVALID_BUFFSIZE,
                              ("Buffer: invalid buffer size (size=%d)",
                              pterm->pdataArgs[0].uipDataValue));
+            
+            // Zero length buffer BSOD workaround
+            pterm->pdataResult->pbDataBuff = NEWBDOBJ(gpheapGlobal, 1); // alloc 1 byte fake buffer
+            pterm->pdataResult->dwDataType = OBJTYPE_BUFFDATA;
+            pterm->pdataResult->dwDataLen = 1;
+            MEMZERO(pterm->pdataResult->pbDataBuff, 1);
+            pctxt->pbOp = pterm->pbOpEnd;
+
+            rc = STATUS_SUCCESS;
         }
         else if ((pterm->pdataResult->pbDataBuff =
                   NEWBDOBJ(gpheapGlobal,
@@ -73,6 +88,34 @@ NTSTATUS LOCAL Buffer(PCTXT pctxt, PTERM pterm)
                     pterm->pdataResult->dwDataLen);
             MEMCPY(pterm->pdataResult->pbDataBuff, pctxt->pbOp, dwInitSize);
             pctxt->pbOp = pterm->pbOpEnd;
+
+            /* IOTRAPS range 0xFF00-0xFFFF vs VGA (10-bit decode!) conflict workaround
+             Device (IOTR)
+             {
+                ...
+                Name (BUF0, ResourceTemplate ()
+                    {
+                        IO (Decode16,
+                            0x0000,             // Range Minimum
+                            0x0000,             // Range Maximum
+                            0x01,               // Alignment
+                            0xFF,               // Length           > 1
+                            _Y21)
+                    }) binary: 11 0D 0A _47 01 00 00 00 00 01 FF 79 00_
+                ...
+             }
+            */
+
+            if (dwInitSize == 10) {
+                wIOBuf = (USHORT*) pterm->pdataResult->pbDataBuff;
+                if (wIOBuf[0] == 0x0147 &&
+                    wIOBuf[1] == 0x0000 &&
+                    wIOBuf[2] == 0x0000 &&
+                    wIOBuf[3] == 0xFF01 &&
+                    wIOBuf[4] == 0x0079 ) {
+                        pterm->pdataResult->pbDataBuff[7] = 1;  // limit range to one adress
+                }
+            }
         }
     }
 
@@ -703,6 +746,17 @@ NTSTATUS LOCAL ExprOp2(PCTXT pctxt, PTERM pterm)
                     pterm->pdataArgs[0].uipDataValue ^
                     pterm->pdataArgs[1].uipDataValue;
                 EXIT(2, ("XOr=%x (Result=%x)\n",
+                         rc, pterm->pdataResult->uipDataValue));
+                break;
+                
+            case OP_MOD:
+                ENTER(2, ("Mod(Value1=%x,Value2=%x)\n",
+                          pterm->pdataArgs[0].uipDataValue,
+                          pterm->pdataArgs[1].uipDataValue));
+                pterm->pdataResult->uipDataValue =
+                    pterm->pdataArgs[0].uipDataValue %
+                    pterm->pdataArgs[1].uipDataValue;
+                EXIT(2, ("Mod=%x (Result=%x)\n",
                          rc, pterm->pdataResult->uipDataValue));
         }
 
@@ -1528,10 +1582,12 @@ Return Value:
     char Win2000[] = "Windows 2000";
     char Win2001[] = "Windows 2001";
     char Win2001SP1[] = "Windows 2001 SP1";
+    char Win2001SP2[] = "Windows 2001 SP2";
     char* SupportedOSList[] = {
                                     Win2000, 
                                     Win2001,
-                                    Win2001SP1
+                                    Win2001SP1,
+                                    Win2001SP2
                                 };
     ULONG ListSize = sizeof(SupportedOSList) / sizeof(char*);
     ULONG i = 0;
@@ -1558,8 +1614,7 @@ Return Value:
                     // 0 == Windows 2000
                     // 1 == Windows 2001
                     // 2 == Windows 2001 SP1
-                    // .
-                    // .
+                    // 3 == Windows 2001 SP2
                     //
                     if(gdwHighestOSVerQueried < i)
                     {
@@ -1577,3 +1632,837 @@ Return Value:
 }       //OSInterface
 
 
+
+///////////////////////////////////////////////
+// ACPI 2.0
+
+
+NTSTATUS LOCAL ConvertToInteger(POBJDATA In, POBJDATA Out) {
+    ULONG   dwDataLen;
+    OBJDATA data;
+
+    MEMZERO(&data, sizeof(data));
+    data.dwDataType = OBJTYPE_INTDATA;
+    switch (In->dwDataType) {
+    case OBJTYPE_INTDATA:
+        data.dwDataValue = In->dwDataValue;
+
+        FreeDataBuffs(Out, 1);
+        MEMCPY(Out, &data, sizeof(data));
+        return STATUS_SUCCESS;
+        break;
+    case OBJTYPE_STRDATA:
+        data.dwDataValue = StrToUL((PSZ)In->pbDataBuff, NULL, 0);
+
+        FreeDataBuffs(Out, 1);
+        MEMCPY(Out, &data, sizeof(data));
+        return STATUS_SUCCESS;
+        break;
+    case OBJTYPE_BUFFDATA:
+        dwDataLen = In->dwDataLen;
+        if (dwDataLen > 4)    // 8 - int64
+            dwDataLen = 4;
+        MEMCPY(&data.dwDataValue, In->pbDataBuff, dwDataLen);
+
+        FreeDataBuffs(Out, 1);
+        MEMCPY(Out, &data, sizeof(data));
+        return STATUS_SUCCESS;
+        break;
+    default:
+        return AMLIERR_UNEXPECTED_OBJTYPE;
+        break;
+    }
+}
+
+
+NTSTATUS LOCAL ToInteger(PCTXT pctxt, PTERM pterm)
+{
+    NTSTATUS rc = STATUS_SUCCESS;
+    POBJDATA pdata;
+    TRACENAME("TOINTEGER")
+    ENTER(2, ("ToInteger(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
+
+    if (((rc = ValidateArgTypes(pterm->pdataArgs, "D"))                       == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)) {
+            if ((rc = ConvertToInteger(pterm->pdataArgs, pterm->pdataResult)) == STATUS_SUCCESS)
+                rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+    }
+
+    EXIT(2, ("ToInteger=%x (Result=%x)\n", rc, pterm->pdataResult));
+    return rc;
+}
+
+
+char HTOALookupTable[]="0123456789ABCDEF";
+
+
+NTSTATUS LOCAL ToHexString(PCTXT pctxt, PTERM pterm)
+{
+    NTSTATUS rc = STATUS_SUCCESS;
+    POBJDATA pdata;
+    int      StrLen;
+    POBJDATA In  = pterm->pdataArgs;
+    POBJDATA Out = pterm->pdataResult;
+    ULONG    int32;
+    ULONG    SrcIdx;
+    int      i;
+    UCHAR    pair;
+    TRACENAME("TOHEXSTRING")
+    ENTER(2, ("ToHexString(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
+
+    if (((rc = ValidateArgTypes(pterm->pdataArgs, "D"))                       == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)) {
+            StrLen = 2;
+            Out->dwDataType = OBJTYPE_STRDATA;
+            switch (In->dwDataType) {
+            case OBJTYPE_INTDATA:
+                int32 = In->dwDataValue;
+                do {
+                    int32 >>= 4;
+                    ++StrLen;
+                } while (int32);
+
+                Out->dwDataLen = StrLen + 1;
+                Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
+
+                if (Out->pbDataBuff == NULL) {
+                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                                 ("ToHexString: failed to allocate target buffer"));
+                } else {
+                    Out->pbDataBuff[0] = '0';
+                    Out->pbDataBuff[1] = 'x';
+                    int32 = In->dwDataValue;
+                    for (i = StrLen - 1; i >= 2; --i) {
+                        Out->pbDataBuff[i] = HTOALookupTable[int32 & 0xF];
+                        int32 >>= 4;
+                    }
+
+                    Out->pbDataBuff[Out->dwDataLen - 1] = '\0'; // ending zero
+                    rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+                }
+                break;
+            case OBJTYPE_STRDATA:
+                Out->dwDataLen = In->dwDataLen;
+                Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
+                    
+                if (Out->pbDataBuff == NULL) {
+                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                                 ("ToHexString: failed to allocate target buffer"));
+                } else {
+                    MEMCPY(Out->pbDataBuff, In->pbDataBuff, Out->dwDataLen);
+                    rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+                }
+                break;
+            case OBJTYPE_BUFFDATA:
+                Out->dwDataLen = 5 * In->dwDataLen;
+                Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
+
+                if (Out->pbDataBuff == NULL) {
+                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                                 ("ToHexString: failed to allocate target buffer"));
+                } else {
+                    i = 0;
+                    if (In->dwDataLen) {
+                        for (SrcIdx = 0; SrcIdx < In->dwDataLen; SrcIdx++) {
+                            Out->pbDataBuff[i]   = '0';
+                            Out->pbDataBuff[i+1] = 'x';
+                            pair = In->pbDataBuff[SrcIdx];
+                            Out->pbDataBuff[i+2] = HTOALookupTable[pair >> 4];
+                            Out->pbDataBuff[i+3] = HTOALookupTable[pair & 0xF];
+                            Out->pbDataBuff[i+4] = ',';
+                            i += 5;
+                        }
+                    }
+
+                    Out->pbDataBuff[Out->dwDataLen - 1] = '\0'; // ending zero
+                    rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+                }
+                break;
+            default:
+                rc = AMLI_LOGERR(AMLIERR_FATAL,
+                            ("ToHexString: invalid arg0 type"));
+                break;
+            }
+    }
+
+    EXIT(2, ("ToHexString=%x (Result=%x)\n", rc, pterm->pdataResult));
+    return rc;
+}
+
+
+NTSTATUS LOCAL ConvertToBuffer(POBJDATA In, POBJDATA Out) {
+    OBJDATA data;
+    int     Len;
+    int     i;
+    ULONG   int32;
+    NTSTATUS rc = STATUS_SUCCESS;
+
+    MEMZERO(&data, sizeof(data));
+    data.dwDataType = OBJTYPE_BUFFDATA;
+    switch (In->dwDataType) {
+    case OBJTYPE_INTDATA:
+        int32 = In->dwDataValue;
+        Len = 4;
+
+        data.dwDataLen = Len;
+        data.pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Len);
+        if (data.pbDataBuff == NULL) {
+            rc = AMLIERR_OUT_OF_MEM;
+        } else {
+            for (i = 0; i < Len; i++) {
+                data.pbDataBuff[i] = (UCHAR) int32;
+                int32 >>= 8;
+              }
+
+            FreeDataBuffs(Out, 1);
+            MEMCPY(Out, &data, sizeof(data));
+        }
+        break;
+    case OBJTYPE_STRDATA:
+    case OBJTYPE_BUFFDATA:
+        Len = In->dwDataLen;
+        data.dwDataLen = Len;
+
+        data.pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Len);
+        if (data.pbDataBuff == NULL) {
+            rc = AMLIERR_OUT_OF_MEM;
+        } else {
+            MEMCPY(data.pbDataBuff, In->pbDataBuff, Len);
+
+            FreeDataBuffs(Out, 1);
+            MEMCPY(Out, &data, sizeof(data));
+        }
+        break;
+    default:
+        rc = AMLIERR_UNEXPECTED_OBJTYPE;
+        break;
+    }
+
+    return rc;
+}
+
+
+NTSTATUS LOCAL ToBuffer(PCTXT pctxt, PTERM pterm)
+{
+    NTSTATUS rc = STATUS_SUCCESS;
+    POBJDATA pdata;
+    TRACENAME("TOBUFFER")
+    ENTER(2, ("ToBuffer(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
+
+    if (((rc = ValidateArgTypes(pterm->pdataArgs, "D"))                       == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)) {
+            if ((rc = ConvertToBuffer(pterm->pdataArgs, pterm->pdataResult))  == STATUS_SUCCESS)
+                rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+    }
+
+    EXIT(2, ("ToBuffer=%x (Result=%x)\n", rc, pterm->pdataResult));
+    return rc;
+}
+
+
+NTSTATUS LOCAL ToDecimalString(PCTXT pctxt, PTERM pterm)
+{
+    NTSTATUS rc = STATUS_SUCCESS;
+    POBJDATA pdata;
+    POBJDATA In  = pterm->pdataArgs;
+    POBJDATA Out = pterm->pdataResult;
+    ULONG    int32;
+    ULONG    StrLen;
+    int      SrcBufLen;
+    ULONG    SrcIdx;
+    int      i;
+    int      j;
+    UCHAR    number;
+    TRACENAME("TODECSTRING")
+    ENTER(2, ("ToDecimalString(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
+
+    if (((rc = ValidateArgTypes(pterm->pdataArgs, "D"))                       == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)) {
+        Out->dwDataType = OBJTYPE_STRDATA;
+        switch (In->dwDataType) {
+        case OBJTYPE_INTDATA:
+            int32 = In->dwDataValue;
+            StrLen = 0;
+            do {
+                int32 /= 10;
+                ++StrLen; 
+            } while (int32);
+
+            Out->dwDataLen = StrLen + 1;
+            Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
+
+            if (Out->pbDataBuff == NULL) {
+                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                                 ("ToDecimalString: failed to allocate target buffer"));
+            } else {
+                int32 = In->dwDataValue;
+                if (StrLen >= 1) {
+                    for (i = StrLen - 1; i >= 0; --i) {
+                        Out->pbDataBuff[i] = HTOALookupTable[int32 % 10];
+                        int32 /= 10;
+                    }
+                }
+
+                Out->pbDataBuff[Out->dwDataLen - 1] = '\0'; // ending zero
+                rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+            }
+            break;
+        case OBJTYPE_STRDATA:
+            Out->dwDataLen = In->dwDataLen;
+            Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
+
+            if (Out->pbDataBuff == NULL) {
+                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                                 ("ToDecimalString: failed to allocate target buffer"));
+            } else {
+                MEMCPY(Out->pbDataBuff, In->pbDataBuff, Out->dwDataLen);
+                rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+            }
+            break;
+        case OBJTYPE_BUFFDATA:
+            SrcBufLen = In->dwDataLen;
+            StrLen = SrcBufLen - 1;
+            if (SrcBufLen) {
+                for (i = 0; i < SrcBufLen; i++) {
+                    number = In->pbDataBuff[i];
+                    if (number >= 10) {
+                        if (number >= 100)
+                            StrLen += 3;
+                        else
+                            StrLen += 2;
+                    } else {
+                        StrLen++;
+                    }
+                }
+            }
+
+            Out->dwDataLen = StrLen + 1;
+            Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
+
+            if (Out->pbDataBuff == NULL) {
+                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                                 ("ToDecimalString: failed to allocate target buffer"));
+            } else {
+                j = 0;  // result buffer index
+                for ( SrcIdx = 0; SrcIdx < In->dwDataLen; SrcIdx++ ) {
+                    number = In->pbDataBuff[SrcIdx];
+                    if (number >= 10) {
+                        if (number >= 100)
+                            Out->pbDataBuff[j++] = HTOALookupTable[(number / 100) % 10];  // 2xx
+
+                        Out->pbDataBuff[j++] = HTOALookupTable[(number / 10) % 10];       // x2x
+                        Out->pbDataBuff[j++] = HTOALookupTable[number % 10];              // xx2  
+                    } else {
+                        Out->pbDataBuff[j++] = HTOALookupTable[number];
+                    }
+                    Out->pbDataBuff[j++] = ',';
+                }
+                
+                Out->pbDataBuff[Out->dwDataLen - 1] = '\0'; // ending zero
+                rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+            }
+            break;
+        default:
+            rc = AMLI_LOGERR(AMLIERR_FATAL,
+                            ("ToDecimalString: invalid arg0 type"));
+            break;
+        }
+    }
+
+    EXIT(2, ("ToDecimalString=%x (Result=%x)\n", rc, pterm->pdataResult));
+    return rc;
+}
+
+
+NTSTATUS LOCAL CreateQWordField(PCTXT pctxt, PTERM pterm)
+{
+    TRACENAME("CREATEQWORDFIELD")
+    NTSTATUS rc = STATUS_SUCCESS;
+    PBUFFFIELDOBJ pbf;
+    ENTER(2, ("CreateQWordField(pctxt=%x,pbOp=%x,pterm=%x)\n",
+              pctxt, pctxt->pbOp, pterm));
+
+    if ((rc = CreateXField(pctxt, pterm, &pterm->pdataArgs[2], &pbf)) ==
+        STATUS_SUCCESS)
+    {
+        pbf->FieldDesc.dwByteOffset = (ULONG)pterm->pdataArgs[1].uipDataValue;
+        pbf->FieldDesc.dwStartBitPos = 0;
+        pbf->FieldDesc.dwNumBits = 8*sizeof(ULONG);     // 8*sizeof(ULONG64) ACPI 2.0
+        pbf->FieldDesc.dwFieldFlags = ACCTYPE_DWORD;    // ACCTYPE_QWORD ACPI 2.0
+    }
+
+    EXIT(2, ("CreateQWordField=%x (pnsObj=%x)\n", rc, pterm->pnsObj));
+    return rc;
+}
+
+
+UCHAR LOCAL ComputeDataChkSum(UCHAR *Buffer, int Len) {
+    UCHAR checksum = 0;
+
+    for ( ; Len; --Len ) {
+        checksum += *Buffer;
+        Buffer++;
+    }
+
+    return -(checksum);
+}
+
+
+NTSTATUS LOCAL ConcatenateResTemplate(PCTXT pctxt, PTERM pterm)
+{
+    NTSTATUS  rc = STATUS_SUCCESS;
+    POBJDATA  pdata;
+    POBJDATA  In  = pterm->pdataArgs;
+    POBJDATA  Out = pterm->pdataResult;
+    ULONG     i,j;
+    ULONG     NewLength;
+    TRACENAME("CONCATENATERESTEMPLATE")
+    ENTER(2, ("ConcatenateResTemplate(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
+
+    if (((rc = ValidateArgTypes(pterm->pdataArgs, "BB"))                      == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)) {
+        if (In[0].dwDataLen <= 1 || In[1].dwDataLen <= 1 ) {
+            rc = AMLI_LOGERR(AMLIERR_FATAL,
+                    ("ConcatenateResTemplate: arg0 or arg1 has length <= 1"));
+        } else {
+            Out->dwDataType = OBJTYPE_BUFFDATA;
+            NewLength = In[0].dwDataLen + In[1].dwDataLen - 2;
+            Out->dwDataLen = NewLength;
+
+            Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, NewLength);
+            if (Out->pbDataBuff == NULL) {
+                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                            ("ConcatenateResTemplate: failed to allocate target buffer"));
+            } else {
+                j = 0;
+
+                i = 0;
+                if (In[0].dwDataLen != 2) {
+                    do {
+                        Out->pbDataBuff[j++] = In[0].pbDataBuff[i++];
+                    } while (i < In[0].dwDataLen - 2);
+                }
+
+                i = 0;
+                if (In[1].dwDataLen != 2) {
+                    do {
+                        Out->pbDataBuff[j++] = In[1].pbDataBuff[i++];
+                    } while (i < In[1].dwDataLen - 2);
+                }
+
+                Out->pbDataBuff[j++] = 0x79;     //EndTag
+                Out->pbDataBuff[j]   = ComputeDataChkSum(Out->pbDataBuff, NewLength - 1);
+                rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+            }
+            
+        }
+    }
+
+    EXIT(2, ("ConcatenateResTemplate=%x (Result=%x)\n", rc, pterm->pdataResult));
+    return rc;
+}
+
+
+size_t LOCAL strnlen(const char *Str, size_t MaxCount)
+{
+  size_t result;
+
+  for (result = 0; result < MaxCount; ++Str) {
+    if (!*Str)
+      break;
+
+    result++;
+  }
+  return result;
+}
+
+
+#define STRSAFE_MAX_CCH  2147483647
+
+// ntstrsafe.c
+NTSTATUS RtlStringVPrintfWorkerA(char* pszDest, size_t cchDest, const char* pszFormat, va_list argList)
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (cchDest == 0)
+    {
+        // can not null terminate a zero-byte dest buffer
+        status = STATUS_INVALID_PARAMETER;
+    }
+    else
+    {
+        int iRet;
+        size_t cchMax;
+
+        // leave the last space for the null terminator
+        cchMax = cchDest - 1;
+
+        iRet = _vsnprintf(pszDest, cchMax, pszFormat, argList);
+
+        if ((iRet < 0) || (((size_t)iRet) > cchMax))
+        {
+            // need to null terminate the string
+            pszDest += cchMax;
+            *pszDest = '\0';
+
+            // we have truncated pszDest
+            status = STATUS_BUFFER_OVERFLOW;
+        }
+        else if (((size_t)iRet) == cchMax)
+        {
+            // need to null terminate the string
+            pszDest += cchMax;
+            *pszDest = '\0';
+        }
+    }
+
+    return status;
+}
+
+
+// ntstrsafe.c
+NTSTATUS RtlStringCchPrintfA(char* pszDest, size_t cchDest, const char* pszFormat, ...)
+{
+    NTSTATUS status;
+
+    if (cchDest > STRSAFE_MAX_CCH)
+    {
+        status = STATUS_INVALID_PARAMETER;
+    }
+    else
+    {
+        va_list argList;
+
+        va_start(argList, pszFormat);
+
+        status = RtlStringVPrintfWorkerA(pszDest, cchDest, pszFormat, argList);
+
+        va_end(argList);
+    }
+
+    return status;
+}
+
+
+NTSTATUS LOCAL ConvertToString(POBJDATA In, ULONG MaxLen, POBJDATA Out)
+{
+    NTSTATUS    rc = STATUS_SUCCESS;
+    ULONG       StrLen = MaxLen;
+    char        TmpBuf[9]; // 17 ACPI 2.0
+    OBJDATA     data;
+    ULONG       BufLen;
+    ULONG       InStrLen;
+
+    MEMZERO(&TmpBuf, sizeof(TmpBuf));
+    MEMZERO(&data,   sizeof(data));
+    data.dwDataType = OBJTYPE_STRDATA;
+
+    switch (In->dwDataType) {
+    case OBJTYPE_INTDATA:
+        BufLen = 9;
+        RtlStringCchPrintfA(TmpBuf, 9, "%x", In->dwDataValue);
+        if (!MaxLen || MaxLen >= BufLen)
+            StrLen = strnlen(TmpBuf, BufLen);
+        data.dwDataLen = StrLen + 1;
+
+        data.pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, data.dwDataLen);
+        if (data.pbDataBuff == NULL) {
+            rc = STATUS_INSUFFICIENT_RESOURCES;
+        } else {
+            MEMCPY(data.pbDataBuff, TmpBuf, data.dwDataLen);
+            data.pbDataBuff[data.dwDataLen - 1] = '\0'; // ending zero
+            FreeDataBuffs(Out, 1);
+            MEMCPY(Out, &data, sizeof(data));
+        }
+        break;
+    case OBJTYPE_STRDATA:
+        if (MaxLen > In->dwDataLen - 1)
+            rc = STATUS_ACPI_FATAL;
+        else {
+            if (!MaxLen)
+                StrLen = In->dwDataLen - 1;
+            data.dwDataLen = StrLen + 1;
+
+            data.pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, data.dwDataLen);
+            if (data.pbDataBuff == NULL) {
+                rc = STATUS_INSUFFICIENT_RESOURCES;
+            } else {
+                MEMCPY(data.pbDataBuff, In->pbDataBuff, data.dwDataLen);
+                data.pbDataBuff[data.dwDataLen - 1] = '\0'; // ending zero
+                FreeDataBuffs(Out, 1);
+                MEMCPY(Out, &data, sizeof(data));
+            }
+        }
+        break;
+    case OBJTYPE_BUFFDATA:
+        InStrLen = In->dwDataLen;
+        if (InStrLen >= 201)
+            InStrLen = 201;
+        if (!MaxLen) {
+            StrLen = strnlen((PCHAR)In->pbDataBuff, InStrLen);
+            if (StrLen == InStrLen)
+                return STATUS_INVALID_BUFFER_SIZE;
+        } else {
+            if (MaxLen > InStrLen || MaxLen > 200)
+               return STATUS_ACPI_FATAL;
+        }
+
+        data.dwDataLen = StrLen + 1;
+        data.pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, data.dwDataLen);
+        if (data.pbDataBuff == NULL) {
+            rc = STATUS_INSUFFICIENT_RESOURCES;
+        } else {
+            MEMCPY(data.pbDataBuff, In->pbDataBuff, data.dwDataLen - 1);
+            data.pbDataBuff[data.dwDataLen - 1] = '\0'; // ending zero
+            FreeDataBuffs(Out, 1);
+            MEMCPY(Out, &data, sizeof(data));
+        }
+        break;
+    default:
+        rc = STATUS_ACPI_INVALID_OBJTYPE;
+    }
+
+    return rc;
+}
+
+
+NTSTATUS LOCAL ToString(PCTXT pctxt, PTERM pterm)
+{
+    NTSTATUS rc = STATUS_SUCCESS;
+    POBJDATA pdata;
+    ULONG    MaxLen;
+    TRACENAME("TOSTRING")
+    ENTER(2, ("ToString(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
+
+    if ( pterm->icArgs == 2                                                                    &&
+         ((rc = ValidateArgTypes(pterm->pdataArgs, "B"))                    == STATUS_SUCCESS) &&
+         ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATA, &pdata)) == STATUS_SUCCESS) ) {
+            rc = ConvertToString(pterm->pdataArgs, 0, pterm->pdataResult);
+
+            switch (rc) {
+            case STATUS_INSUFFICIENT_RESOURCES:
+              rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                  ("ToString: failed to allocate target buffer"));
+              break;
+            case STATUS_INVALID_BUFFER_SIZE:
+              rc = AMLI_LOGERR(AMLIERR_FATAL,
+                  ("ToString: buffer length exceeds maximum value"));
+              break;
+            case STATUS_ACPI_FATAL:
+              rc = AMLI_LOGERR(AMLIERR_FATAL,
+                  ("ToString: length specified exceeds input buffer length or maximum value"));
+              break;
+            }
+    } else 
+    if ( pterm->icArgs == 3                                                                    &&
+         ((rc = ValidateArgTypes(pterm->pdataArgs, "BI"))                   == STATUS_SUCCESS) &&
+         ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATA, &pdata)) == STATUS_SUCCESS) ) {
+            MaxLen = pterm->pdataArgs[1].dwDataValue;
+            if (MaxLen != 0 &&
+                MaxLen != 0xFFFFFFFF) {
+                  rc = ConvertToString(pterm->pdataArgs, MaxLen, pterm->pdataResult);
+            } else {
+                  rc = ConvertToString(pterm->pdataArgs, 0, pterm->pdataResult);
+            }
+
+            switch (rc) {
+            case STATUS_INSUFFICIENT_RESOURCES:
+              rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                  ("ToString: failed to allocate target buffer"));
+              break;
+            case STATUS_INVALID_BUFFER_SIZE:
+              rc = AMLI_LOGERR(AMLIERR_FATAL,
+                  ("ToString: buffer length exceeds maximum value"));
+              break;
+            case STATUS_ACPI_FATAL:
+              rc = AMLI_LOGERR(AMLIERR_FATAL,
+                  ("ToString: length specified exceeds input buffer length or maximum value"));
+              break;
+            }
+    } else {
+        rc = AMLI_LOGERR(AMLIERR_FATAL,
+                            ("ToString: invalid # of arguments: %x", pterm->icArgs));
+    }
+
+    EXIT(2, ("ToString=%x (Result=%x)\n", rc, pterm->pdataResult));
+    return rc;
+}
+
+
+NTSTATUS LOCAL CopyObject(PCTXT pctxt, PTERM pterm)
+{
+    NTSTATUS rc = STATUS_SUCCESS;
+    POBJDATA  In  = pterm->pdataArgs;
+    POBJDATA  Out = pterm->pdataResult;
+    POBJDATA  pdata;
+    BOOLEAN   bWrite;
+    TRACENAME("COPYOBJECT")
+    ENTER(2, ("CopyObject(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
+
+    bWrite = FALSE;
+    rc = ValidateTarget(&pterm->pdataArgs[1], 0, &pdata);
+    if (rc) {
+        rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                ("CopyObject: failed because target object is not a supername"));
+    } else {
+        if (MatchObjType(pdata->dwDataType, OBJTYPE_DATAFIELD)) {
+            if (In->dwDataType != OBJTYPE_INTDATA &&
+                In->dwDataType != OBJTYPE_BUFFDATA)
+            {
+                rc = AMLI_LOGERR(AMLIERR_FATAL,
+                    ("CopyObject: Only Integer and Buffer data can be copied to a Field unit or Buffer Field"));
+                goto Exit;
+            }
+            bWrite = TRUE;
+        }
+
+        MoveObjData(Out, In);
+        if (bWrite)
+            rc = WriteObject(pctxt, pdata, Out);
+        else
+            rc = DupObjData(gpheapGlobal, pdata, Out);
+
+        if (rc) {
+            AMLI_LOGERR(rc,
+                    ("CopyObject: failed to duplicate objdata"));
+        }
+    }
+
+Exit:
+    EXIT(2, ("CopyObject=%x (type=%s,value=%I64x,buff=%x,len=%x)\n",
+            rc,
+            GetObjectTypeName(In->dwDataType),
+            In->dwDataValue,
+            In->pbDataBuff,
+            In->dwDataLen));
+    return rc;
+}
+
+
+NTSTATUS LOCAL MidString(PCTXT pctxt, PTERM pterm)
+{
+    NTSTATUS rc = STATUS_SUCCESS;
+    POBJDATA  In  = pterm->pdataArgs;
+    POBJDATA  Out = pterm->pdataResult;
+    POBJDATA  pdata;
+    ULONG     DataLen, NewLength;
+    ULONG     MidIndex, MidSize;  
+    ULONG     i,j;
+    TRACENAME("MID")
+    ENTER(2, ("MidString(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
+
+    if (((rc = ValidateArgTypes(pterm->pdataArgs, "TII"))                     == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[3], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)) {
+            if (In->dwDataType > OBJTYPE_BUFFDATA) {
+                rc = AMLI_LOGERR(AMLIERR_FATAL,
+                        ("Mid: invalid arg0 type"));
+            } else {
+                Out->dwDataType = In->dwDataType;
+                DataLen = In->dwDataLen;
+                MidIndex = In[1].dwDataValue;
+                MidSize  = In[2].dwDataValue;
+                if (MidIndex < DataLen) {
+                    NewLength = MidSize;
+
+                    if (Out->dwDataType == OBJTYPE_STRDATA) {
+                        DataLen--;   // exclude ending zero
+                        if ((MidIndex + MidSize) > DataLen)
+                            NewLength = DataLen - MidIndex;
+
+                        Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, NewLength + 1);
+                        if (Out->pbDataBuff ==  NULL) {
+                            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                                 ("Mid: failed to allocate target string"));
+                        } else {
+                            Out->dwDataLen = NewLength + 1;
+                            Out->pbDataBuff[Out->dwDataLen - 1] = '\0'; // ending zero
+                        }
+                    } else {
+                        if ( Out->dwDataType != OBJTYPE_BUFFDATA ) {
+                            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                                 ("Mid: pterm->pdataResult->dwDataType != OBJTYPE_BUFFDATA"));
+                        } else {
+                            if ((MidIndex + MidSize) > DataLen)
+                                NewLength = DataLen - MidIndex;
+
+                            Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, NewLength);
+                            if (Out->pbDataBuff ==  NULL) {
+                                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                                     ("Mid: failed to allocate target string"));
+                            } else {
+                                Out->dwDataLen = NewLength;
+                            }
+                        }
+                    }
+
+                    if (!rc) {
+                        i = MidIndex;
+                        j = 0;
+                        if (NewLength) {
+                            do {
+                                Out->pbDataBuff[j++] = In->pbDataBuff[i++];
+                            } while (j < NewLength);
+                        }
+    
+                        rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+                    }
+                } else { // MidIndex >= DataLen, set len = 0
+                    if (In->dwDataType == OBJTYPE_STRDATA) {
+                        Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, 1);
+                        if (Out->pbDataBuff ==  NULL) {
+                            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                                 ("Mid: failed to allocate target string"));
+                        } else {
+                            Out->pbDataBuff[0] = '\0'; // ending zero
+                            Out->dwDataLen = 1;
+
+                            rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+                        }
+                    }
+                }
+            }
+    }
+
+    EXIT(2, ("MidString=%x (Result=%x)\n", rc, pterm->pdataResult));
+    return rc;
+}
+
+
+NTSTATUS LOCAL Continue(PCTXT pctxt, PTERM pterm)
+{
+    TRACENAME("CONTINUE")
+    ENTER(2, ("Continue(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
+
+    ;
+
+    EXIT(2, ("Continue=%x\n", AMLISTA_CONTINUEOP));
+    return AMLISTA_CONTINUEOP;
+}
+
+
+NTSTATUS LOCAL Timer(PCTXT pctxt, PTERM pterm)
+{
+    TRACENAME("TIMER")
+    ENTER(2, ("Timer(pctxt=%x,pbOp=%x,pterm=%x, Querying for %s)\n",
+                  pctxt,
+                  pctxt->pbOp,
+                  pterm,
+                  pterm->pdataArgs->pbDataBuff));
+
+    pterm->pdataResult->dwDataType = 1;
+    pterm->pdataResult->dwDataValue = (ULONG)KeQueryInterruptTime();
+
+    EXIT(2, ("Timer=%x (pnsObj=%x)\n", 0, pterm->pnsObj));
+    return AMLIERR_NONE;
+}
+
+
+    /*
+    __asm {
+        L1: jmp L1
+    }
+    */
+
+
+// ACPI 2.0
+///////////////////////////////////////////////
