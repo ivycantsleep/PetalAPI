@@ -6524,6 +6524,38 @@ FatalExit(
     ExitProcess(ExitCode);
 }
 
+DWORD
+WINAPI
+GetProcessFlags(DWORD processid)
+{
+    IMAGE_NT_HEADERS* nt;
+    DWORD flags = 0;
+
+    if (processid && processid != GetCurrentProcessId()) return 0;
+
+    if ((nt = RtlImageNtHeader(NtCurrentTeb()->Peb->ImageBaseAddress)))
+    {
+        if (nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+            flags |= PDB32_CONSOLE_PROC;
+    }
+    if (!AreFileApisANSI()) flags |= PDB32_FILE_APIS_OEM;
+    if (IsDebuggerPresent()) flags |= PDB32_DEBUGGED;
+    return flags;
+}
+
+HANDLE
+WINAPI
+ConvertToGlobalHandle(HANDLE hSrc)
+{
+    HANDLE ret = INVALID_HANDLE_VALUE;
+    DuplicateHandle(GetCurrentProcess(), hSrc, GetCurrentProcess(), &ret, 0, FALSE,
+        DUPLICATE_MAKE_GLOBAL | DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
+    return ret;
+}
+
+BOOL
+WINAPI
+
 BOOL
 WINAPI
 IsProcessorFeaturePresent(
