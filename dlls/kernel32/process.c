@@ -6555,9 +6555,6 @@ ConvertToGlobalHandle(HANDLE hSrc)
 
 BOOL
 WINAPI
-
-BOOL
-WINAPI
 IsProcessorFeaturePresent(
     DWORD ProcessorFeature
     )
