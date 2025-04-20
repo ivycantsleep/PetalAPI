@@ -1,5 +1,0 @@
-LIBRARY OPRGHDLR.SYS
-
-EXPORTS
-        RegisterOpRegionHandler
-        DeRegisterOpRegionHandler

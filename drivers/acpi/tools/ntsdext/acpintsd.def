@@ -1,9 +1,0 @@
-LIBRARY NTSDEXTS
-
-EXPORTS
-    version
-    sscope
-    scope
-    amlterm
-    sstack
-    pstack
