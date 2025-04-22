@@ -553,6 +553,9 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
+# PetalAPI specific
+pconfig
+
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
 
