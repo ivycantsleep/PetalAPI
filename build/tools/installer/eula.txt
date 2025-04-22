@@ -1,0 +1,10 @@
+!!! IMPORTANT !!!
+
+PetalAPI is very experimental and is NOT stable as of now.
+
+Don't flood GitHub's issue tracker with the following issues:
+- Bricked installations (I recommend to make a restore point before installing)
+- Lack of Windows Server 2003 and XP x64 support
+- "This project sucks" instead of proper criticism
+
+Thank you for reading.
