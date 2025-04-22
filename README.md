@@ -3,7 +3,7 @@
 <h1>The PetalAPI™ Extension for Microsoft™ Windows XP.</h1>
 </div>
 PetalAPI™ is a series of drivers, libraries and applications for Windows XP to facilitate modern software and hardware compatibility.
-Please note that this is an __extremely__ _experimental_ piece of software that is __not__ stable in any way.
+Please note that this is an extremely experimental piece of software that is not stable in any way.
 
 <div style="display: flex; align-items: center;">
 <img src="/img/branding/poster.png" width="300">
